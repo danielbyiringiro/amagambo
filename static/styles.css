@@ -21,3 +21,17 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
+footer {
+    text-align: center;
+    background-color: #537fbe;
+    padding: 15px;
+    font-size: large;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+  }
+
+footer a {
+    color: initial;
+}
