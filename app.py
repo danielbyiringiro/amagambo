@@ -29,12 +29,34 @@ def after_request(response):
     return response
 
 
-@app.route("/")
-@login_required
-def index():
-    """Show portfolio of stocks"""
-    flash("Registered")
-    return "Murakaza neza"
+def check_guess(word, guess):
+    if len(guess) != len(word):
+        return 'Invalid guess! The guess should be a word with 6 letters.'
+
+    colors = []
+    for i in range(len(word)):
+        if guess[i] == word[i]:
+            colors.append('greenbox')  # Character is in the right position
+        elif guess[i] in word:
+            colors.append('bluebox')  # Character is in the word but wrong position
+        else:
+            colors.append('redbox')  # Character is not in the word
+
+    return colors
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    word = 'helloo'  # Replace with your word
+
+    if request.method == 'POST':
+        guess = request.form.getlist('guess[]')
+        colors = check_guess(word, guess)
+    else:
+        guess = [''] * 6
+        colors = [''] * 6
+
+    return render_template('index.html', guess=guess, colors=colors)
+
 
 @app.route("/history")
 @login_required
@@ -129,6 +151,7 @@ def register():
             session["user_id"] = id
             
             # redirect to home page
+            flash("Registered")
             return redirect("/")
         
         else:
