@@ -1,15 +1,13 @@
-from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, render_template, request, session, redirect
 from flask_session import Session
+from helper import *
+from PIL import Image
 from werkzeug.security import check_password_hash, generate_password_hash
+from cs50 import SQL
 
-from helpers import login_required
-
-# Configure application
 app = Flask(__name__)
 
-# Custom filter
-
+db = SQL("sqlite:///amagambo.db")
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -17,7 +15,6 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///amagambo.db")
 
 
 @app.after_request
@@ -27,43 +24,6 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
-
-
-def check_guess(word, guess):
-    if len(guess) != len(word):
-        return 'Invalid guess! The guess should be a word with 6 letters.'
-
-    colors = []
-    for i in range(len(word)):
-        if guess[i] == word[i]:
-            colors.append('greenbox')  # Character is in the right position
-        elif guess[i] in word:
-            colors.append('bluebox')  # Character is in the word but wrong position
-        else:
-            colors.append('redbox')  # Character is not in the word
-
-    return colors
-
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    word = 'helloo'  # Replace with your word
-
-    if request.method == 'POST':
-        guess = request.form.getlist('guess[]')
-        colors = check_guess(word, guess)
-    else:
-        guess = [''] * 6
-        colors = [''] * 6
-
-    return render_template('index.html', guess=guess, colors=colors)
-
-
-@app.route("/history")
-@login_required
-def history():
-    """Show history of transactions"""
-    return None
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -163,26 +123,76 @@ def register():
         return render_template("register.html")
 
 
-def search(email):
-    """Searches if current email is in database"""
-    rows = db.execute("SELECT * FROM users WHERE email = ?", email)
-    #returns a boolean
-    return len(rows) == 0
-    
-def validate(password):
-    """Validates if password meets security policy"""
+@app.route("/", methods=["GET", "POST"])
+@login_required
+def home():
+    if request.method == "GET":
+        board = boardDefault()
+        keyboard = keyBoard()
+        color_board = boardDefault()
 
-    #check length
-    if len(password) < 8:
-        return "Password has to be at least 8 characters"
+        return render_template("board.html", board=board, letter = letter, keyboard = keyboard, color_board = color_board)
     
-    #check if password contains a digit
-    if not any([x for x in password if x.isdigit()]):
-        return "Password has to contain at least a single digit"
+    if request.method == "POST":
+        selected_letter = request.form.get("selected_letter")
+        board = request.form.get("board")
+        color_board = request.form.get("color_board")
+
+        board = eval(board)
+        color_board = eval(color_board)
+
+        i, j = position(board)
+        
+        if selected_letter == "DELETE":
+
+            if i > 0 and j == 0:
+                if color_board[i-1][5] ==  "":
+                    board[i-1][5] = ""
+
+            else:
+                board[i][j-1] = ""
     
-    #check for letters:
-    if not any([x for x in password if x.islower() or x.isupper()]):
-        return "Password has to contain at least a single letter"
+        elif selected_letter == "ENTER":
+
+            if (i > 0 and j == 0):
+                
+                guess = "".join(board[i-1]) if i is not None else "".join(board[-1])
+                message, response = checkFunction(guess)
+
+                if response == True:
+                    color_board[i-1] = ["GREEN"] * 6   
+                    flash(message)
+                    generate_image(color_board, 1, i)
+                    return render_template("display.html")
+                
+                elif len(message) == 6:
+                    
+                    color_board[i-1] = [x for x in message]
+
+                    if i == 7 and j == 0:
+                        word = word_day()
+                        flash(f"Game over today's word is {word}")
+                        return render_template("done.html", letter = letterDone, color_board = color_board)
+                    
+                    else:
+                    
+                        return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+            
+                else:
+
+                    flash("Word not in list")
+                    return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
     
-    #passed all checks
-    return True
+            
+            else:
+                flash("Not enough letters")
+                return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+
+        else:
+            if i > 0 and j == 0 and color_board[i-1][5] != '':
+                board[i][j] = selected_letter
+            elif not (i > 0 and j == 0):
+                board[i][j] = selected_letter
+        
+        return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+

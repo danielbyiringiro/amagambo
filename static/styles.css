@@ -22,7 +22,8 @@ nav .navbar-brand .green
     color: #2e944b;
 }
 
-footer {
+footer 
+{
     text-align: center;
     background-color: #537fbe;
     padding: 15px;
@@ -30,8 +31,39 @@ footer {
     position: fixed;
     bottom: 0;
     width: 100%;
-  }
+}
 
-footer a {
+footer a 
+{
     color: initial;
 }
+
+.navbar-brand 
+{
+    font-size: 24px; /* Adjust the font size for the brand */
+    text-decoration: none; /* Remove underline from the link */
+}
+
+.navbar-nav 
+{
+    display: flex;
+    align-items: center;
+}
+  
+.navbar-nav .nav-item 
+{
+    list-style: none; /* Remove bullet points */
+    margin-left: 10px; /* Add spacing between navigation items */
+}
+  
+  /* Styles for the navigation links (optional) */
+.navbar-nav .nav-link 
+{
+    text-decoration: none; /* Remove underline from the link */
+    color: black; /* Black color for links */
+}
+
+.container-fluid {
+    display: flex;
+    justify-content: space-between;
+  }
