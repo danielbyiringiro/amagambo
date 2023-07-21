@@ -41,7 +41,7 @@ def login():
             return redirect("/login")
 
         # Ensure password was submitted
-        elif not request.form.get("password"):
+        if not request.form.get("password"):
             flash("Empty password")
             return redirect("/login")
 
@@ -120,6 +120,7 @@ def register():
             return redirect("/register")
            
     else:
+        flash("Log In")
         return render_template("register.html")
 
 
@@ -197,3 +198,10 @@ def home():
         
         return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
 
+
+@app.route("/admin")
+@login_required
+@admin_required
+def admin():
+    
+    return render_template("admin.html")

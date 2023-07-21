@@ -195,6 +195,20 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    """
+    Decorate routes to require login.
+
+    http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        admin_id = 3
+        if session.get("user_id")  != admin_id:
+            return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
+
 def search(email):
     """Searches if current email is in database"""
     rows = db.execute("SELECT * FROM users WHERE email = ?", email)
