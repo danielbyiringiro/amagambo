@@ -171,7 +171,7 @@ def checkFunction(guess):
     if all([x == "GREEN" for x in colors]):
 
         isWin = True
-        message = "Congratulation you guessed the word"
+        message = "Congratulation you guessed the word !!! Feel free to share your gameboard with friends"
 
         return message, isWin
     

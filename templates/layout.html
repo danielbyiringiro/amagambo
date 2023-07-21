@@ -11,6 +11,8 @@
         
         <link href="/static/favicon.ico" rel="icon">
 
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Rancho&effect=shadow-multiple">
+
         {%block game%}{%endblock%}
         
         <title>Amagambo: {% block title %}{% endblock %}</title>
@@ -19,12 +21,11 @@
         <nav class="bg-light border navbar navbar-expand-md navbar-light">
             <div class="container-fluid">
                 <a class="navbar-brand" href="/"><span class="blue">A</span><span class="red">M</span><span class="yellow">A</span><span class="green">GAMBO</span></a>
-                {%block style%}
-                {% endblock %}
+                {% block style%}{% endblock %}
                 <div class="collapse navbar-collapse" id="navbar">
                     {% if session["user_id"] %}
                         <ul class="navbar-nav ms-auto mt-2">
-                            <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/logout" style="margin-right: 10px; font-size: x-large;">Log Out</a></li>
                         </ul>
                     {% else %}
                         <ul class="navbar-nav ms-auto mt-2">

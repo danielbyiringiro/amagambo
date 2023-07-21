@@ -171,8 +171,9 @@ def home():
 
                     if i == 7 and j == 0:
                         word = word_day()
-                        flash(f"Game over today's word is {word}")
-                        return render_template("done.html", letter = letterDone, color_board = color_board)
+                        flash(f"You ran out of guesses, today's word is {word.upper()}")
+                        generate_image(color_board, 1, "X")
+                        return render_template("display.html")
                     
                     else:
                     

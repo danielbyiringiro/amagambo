@@ -1,5 +1,7 @@
 {% extends "reglog.html" %}
 
-{%block main%}
-    <img src="{{ url_for('static', filename='colorboard.png') }}" alt="Game Board">
-{%endblock%}
+{% block main %}
+    <div class="mx-auto">
+        <img src="{{ url_for('static', filename='colorboard.png') }}" alt="Game Board">
+    </div>
+{% endblock %}
