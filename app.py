@@ -27,41 +27,44 @@ def after_request(response):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in"""
-
-    # Forget any user_id
-    session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
+    """Register user"""
+    
     if request.method == "POST":
+        
+        # get email
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-        # Ensure username was submitted
-        if not request.form.get("email"):
-            flash("Empty email")
+        if not email: #if email is empty
+            flash("Email not provided")
             return redirect("/login")
-
-        # Ensure password was submitted
-        if not request.form.get("password"):
-            flash("Empty password")
+        
+        if not password:
+            flash("Password not provided")
             return redirect("/login")
+    
+        # get password and the password confirmation
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
+        rows = db.execute("SELECT * FROM users where email = ?", email)
 
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            flash("Username or password is wrong")
+        if not rows:
+            flash("You are not registered. Sign Up")
+            return redirect("/register")
+        
+        if not check_password_hash(rows[0]['hash'], password):
+            flash("Username or password not correct")
             return redirect("/login")
-
-        # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
-
-        # Redirect user to home page
+            
+        id = rows[0]["id"]
+        session["user_id"] = id
+            
+        # redirect to home page
+        
         return redirect("/")
-
-    # User reached route via GET (as by clicking a link or via redirect)
+           
     else:
-        return render_template("login.html")
+
+        return render_template("signin.html")
 
 
 @app.route("/logout")
@@ -82,8 +85,14 @@ def register():
         
         # get email
         email = request.form.get("email")
+        password = request.form.get("password")
+
         if not email: #if email is empty
             flash("Email not provided")
+            return redirect("/register")
+        
+        if not password:
+            flash("Password not provided")
             return redirect("/register")
         
         # check if email already exists
@@ -94,7 +103,7 @@ def register():
             return redirect("/register")
         
         # get password and the password confirmation
-        password = request.form.get("password")
+        
         password_confirm = request.form.get("password_confirm")
 
         # meets security standards
@@ -102,7 +111,7 @@ def register():
         if  response == True:
             if password != password_confirm:
                 flash("Passwords do not match")
-                return redirect("/")
+                return redirect("/register")
             
             hash = generate_password_hash(password)
             db.execute("INSERT INTO users(email,hash,password) VALUES(?,?,?)", email,hash,password)
@@ -120,8 +129,8 @@ def register():
             return redirect("/register")
            
     else:
-        flash("Log In")
-        return render_template("register.html")
+
+        return render_template("signup.html")
 
 
 @app.route("/", methods=["GET", "POST"])

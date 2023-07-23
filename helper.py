@@ -232,3 +232,8 @@ def validate(password):
     
     #passed all checks
     return True
+
+
+
+
+
