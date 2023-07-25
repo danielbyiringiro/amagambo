@@ -4,12 +4,10 @@ from PIL import Image, ImageDraw, ImageFont
 from flask import redirect, session
 from functools import wraps
 from cs50 import SQL
+from datetime import datetime, timedelta
+from random import choice
 
 db = SQL("sqlite:///amagambo.db")
-
-def word_day():
-    return "follow"
-
 
 color_dic = {"GREEN": "#528d4e", "RED":"#ea433b","YELLOW": "#b49f39",'':None}
 
@@ -66,7 +64,6 @@ def generate_image(board, day, score, gap_size=5, tile_gap=2):
     # Save the image to a file (e.g., PNG)
    
     image.save("static/colorboard.png", format='PNG')
-    
     
 
 def print_board(board):
@@ -148,11 +145,11 @@ def position(board):
     return None, None
 
 def checkFunction(guess):
-    word = word_day()
+    word = word_for_the_day()
     guess = guess.lower()
-    WORDS = ["purple","gentle","wisdom","follow"]
+    all_words = words()
 
-    if guess not in WORDS:
+    if guess not in all_words:
         
         message = "Word not in list"
         isWin = False
@@ -203,7 +200,7 @@ def admin_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        admin_id = 3
+        admin_id = 1
         if session.get("user_id")  != admin_id:
             return redirect("/")
         return f(*args, **kwargs)
@@ -211,7 +208,7 @@ def admin_required(f):
 
 def search(email):
     """Searches if current email is in database"""
-    rows = db.execute("SELECT * FROM users WHERE email = ?", email)
+    rows = db.execute("SELECT * FROM user WHERE email = ?", email)
     #returns a boolean
     return len(rows) == 0
     
@@ -232,6 +229,113 @@ def validate(password):
     
     #passed all checks
     return True
+
+
+def days_between():
+
+    today = datetime.today()
+
+    target_date = datetime(2023, 7, 23)
+
+    days_passed = (today - target_date).days
+    
+    dates_in_between = []
+
+    for i in range(1, days_passed):
+        date = target_date + timedelta(days=i)
+        date = date.strftime("%Y-%m-%d")
+        dates_in_between.append(date)
+    
+
+    dates_in_between.append(today.strftime("%Y-%m-%d"))
+
+    return dates_in_between
+
+
+def admin_details():
+   
+    dates = days_between()
+    details = []
+    for date in dates:
+        
+        total_users = db.execute("select count(*) as num from user where created_at <= ?", date)[0]['num']
+        unguessed = db.execute("select count(*) as num from play where isPlay = 'False' and date = ?", date)[0]['num']
+        guessed = db.execute("select count(*) as num from play where isPlay = 'True' and date = ?", date)[0]['num']
+        word = db.execute("select word from wordforday where date = ?", date)[0]['word']
+        word = format_word(word)
+
+        day_detail = {'date': date, 'total_users': total_users, 'guessed': guessed if not None else 0, 'unguessed': unguessed if not None else 0, 'word':word}
+
+        details.append(day_detail)
+
+    rev_details = []
+    for i in reversed(details):
+        rev_details.append(i)
+
+    return rev_details
+
+def format_word(word):
+
+    word = f"{word[0]} - - - - {word[-1]}"
+
+    return word
+
+def day():
+
+    today = datetime.today()
+    date = today.strftime("%Y-%m-%d")
+    return date
+
+def num_day():
+
+    numList = days_between()
+    return len(numList)
+
+def detail_recorded(id):
+
+    today = day()
+    rows = db.execute("select * from play where id = ? and date = ?",id, today)
+    return len(rows) == 0
+
+def word_for_the_day():
+
+    today = day()
+    word_s = db.execute("select word from wordforday")
+    rows = db.execute("select date from wordforday")
+    dates = [row["date"] for row in rows]
+    word_s = [row["word"] for row in word_s]
+    if today in dates:
+        word = db.execute("select word from wordforday where date = ?", today)[0]['word']
+        return str(word)
+    
+    else:
+        
+        allwords = words()
+        unused_words = [x for x in allwords if x not in word_s]
+        word_for_day = choice(unused_words)
+        bankid = db.execute("select ID from wordbank where word = ?", word_for_day)[0]['ID']
+        today = day()
+        db.execute("insert into wordforday(word,bankid,date) values(?,?,?)", word_for_day, int(bankid), today)
+        return str(word_for_day)
+
+
+
+
+def words():
+
+    kinyaWords = []
+    rows = db.execute("select word from wordbank")
+    for row in rows:
+
+        word = row['WORD']
+        kinyaWords.append(word)
+
+    kinyaWords[219] = 'kuyaga'
+    kinyaWords[323] = 'ijambo'
+    return kinyaWords
+
+
+    
 
 
 

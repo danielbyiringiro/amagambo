@@ -1,7 +1,6 @@
 from flask import Flask, flash, render_template, request, session, redirect
 from flask_session import Session
 from helper import *
-from PIL import Image
 from werkzeug.security import check_password_hash, generate_password_hash
 from cs50 import SQL
 
@@ -45,7 +44,7 @@ def login():
     
         # get password and the password confirmation
 
-        rows = db.execute("SELECT * FROM users where email = ?", email)
+        rows = db.execute("SELECT * FROM user where email = ?", email)
 
         if not rows:
             flash("You are not registered. Sign Up")
@@ -114,8 +113,9 @@ def register():
                 return redirect("/register")
             
             hash = generate_password_hash(password)
-            db.execute("INSERT INTO users(email,hash,password) VALUES(?,?,?)", email,hash,password)
-            rows = db.execute("SELECT id FROM users where email = ?", email)
+            time = day()
+            db.execute("INSERT INTO user(email,hash,created_at) VALUES(?,?,?)", email,hash, time)
+            rows = db.execute("SELECT id FROM user where email = ?", email)
             id = rows[0]["id"]
             session["user_id"] = id
             
@@ -140,6 +140,8 @@ def home():
         board = boardDefault()
         keyboard = keyBoard()
         color_board = boardDefault()
+        word = word_for_the_day()
+        
 
         return render_template("board.html", board=board, letter = letter, keyboard = keyboard, color_board = color_board)
     
@@ -147,7 +149,8 @@ def home():
         selected_letter = request.form.get("selected_letter")
         board = request.form.get("board")
         color_board = request.form.get("color_board")
-
+        today = day()
+        num_days = num_day()
         board = eval(board)
         color_board = eval(color_board)
 
@@ -170,9 +173,11 @@ def home():
                 message, response = checkFunction(guess)
 
                 if response == True:
-                    color_board[i-1] = ["GREEN"] * 6   
+                    color_board[i-1] = ["GREEN"] * 6 
+                    if detail_recorded(session['user_id']):
+                        db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
                     flash(message)
-                    generate_image(color_board, 1, i)
+                    generate_image(color_board, num_days, i)
                     return render_template("display.html")
                 
                 elif len(message) == 6:
@@ -181,8 +186,10 @@ def home():
 
                     if i == 7 and j == 0:
                         word = word_day()
+                        if detail_recorded(session['user_id']):
+                            db.execute("INSERT INTO play(userId, isPlay, date) values(?,'False',?)", session['user_id'], today)
                         flash(f"You ran out of guesses, today's word is {word.upper()}")
-                        generate_image(color_board, 1, "X")
+                        generate_image(color_board, num_days, "X")
                         return render_template("display.html")
                     
                     else:
@@ -213,4 +220,5 @@ def home():
 @admin_required
 def admin():
     
-    return render_template("admin.html")
+    details = admin_details()
+    return render_template("admin.html", details = details)
