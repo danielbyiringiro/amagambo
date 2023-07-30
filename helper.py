@@ -1,11 +1,13 @@
 from PIL import Image
 from copy import deepcopy
 from PIL import Image, ImageDraw, ImageFont
-from flask import redirect, session
+from flask import redirect, session, request, flash, render_template
 from functools import wraps
 from cs50 import SQL
 from datetime import datetime, timedelta
 from random import choice
+from ast import literal_eval
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQL("sqlite:///amagambo.db")
 
@@ -245,16 +247,13 @@ def days_between():
         date = target_date + timedelta(days=i)
         date = date.strftime("%Y-%m-%d")
         dates_in_between.append(date)
-    
-
-    dates_in_between.append(today.strftime("%Y-%m-%d"))
 
     return dates_in_between
 
 
 def admin_details():
    
-    dates = days_between()
+    dates = available_dates()
     details = []
     for date in dates:
         
@@ -262,8 +261,6 @@ def admin_details():
         unguessed = db.execute("select count(*) as num from play where isPlay = 'False' and date = ?", date)[0]['num']
         guessed = db.execute("select count(*) as num from play where isPlay = 'True' and date = ?", date)[0]['num']
         word = db.execute("select word from wordforday where date = ?", date)[0]['word']
-        word = format_word(word)
-
         day_detail = {'date': date, 'total_users': total_users, 'guessed': guessed if not None else 0, 'unguessed': unguessed if not None else 0, 'word':word}
 
         details.append(day_detail)
@@ -273,12 +270,6 @@ def admin_details():
         rev_details.append(i)
 
     return rev_details
-
-def format_word(word):
-
-    word = f"{word[0]} - - - - {word[-1]}"
-
-    return word
 
 def day():
 
@@ -309,17 +300,12 @@ def word_for_the_day():
         return str(word)
     
     else:
-        
         allwords = words()
         unused_words = [x for x in allwords if x not in word_s]
         word_for_day = choice(unused_words)
         bankid = db.execute("select ID from wordbank where word = ?", word_for_day)[0]['ID']
-        today = day()
         db.execute("insert into wordforday(word,bankid,date) values(?,?,?)", word_for_day, int(bankid), today)
         return str(word_for_day)
-
-
-
 
 def words():
 
@@ -333,6 +319,189 @@ def words():
     kinyaWords[219] = 'kuyaga'
     kinyaWords[323] = 'ijambo'
     return kinyaWords
+
+def available_dates():
+    today = day()
+    rows = db.execute("select date from wordforday where date != ? ", today)
+
+    dates = [row["date"] for row in rows]
+    return dates
+
+def return_data():
+
+    selected_letter = request.form.get("selected_letter")
+    board = request.form.get("board")
+    color_board = request.form.get("color_board")
+    board = literal_eval(board)
+    color_board = literal_eval(color_board)
+
+    return selected_letter, board, color_board
+
+def onDelete(color_board, board, i, j):
+
+    if i > 0 and j == 0:
+        if color_board[i-1][5] ==  "":
+            board[i-1][5] = ""
+    else:
+        board[i][j-1] = ""
+
+def onEnter(color_board, board, i, j):
+
+    num_days = num_day()
+    today = day()
+    word = word_for_the_day()
+
+    if (i > 0 and j == 0):
+                
+        guess = "".join(board[i-1]) if i is not None else "".join(board[-1])
+        message, response = checkFunction(guess)
+
+        if response == True:
+            color_board[i-1] = ["GREEN"] * 6 
+            if detail_recorded(session['user_id']):
+                db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
+            flash(message)
+            generate_image(color_board, num_days, i)
+            return render_template("display.html")
+                
+        elif len(message) == 6:
+                    
+            color_board[i-1] = [x for x in message]
+
+            if i == 7 and j == 0:
+                if detail_recorded(session['user_id']):
+                    db.execute("INSERT INTO play(userId, isPlay, date) values(?,'False',?)", session['user_id'], today)
+                flash(f"You ran out of guesses, today's word is {word.upper()}")
+                generate_image(color_board, num_days, "X")
+                return render_template("display.html")
+                    
+            else:
+                    
+                return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+            
+        else:
+
+            flash("Word not in list")
+            return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+    
+    else:
+
+        flash("Not enough letters")
+        return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+
+def onLetter(color_board, board, i, j, selected_letter):
+
+    if i > 0 and j == 0 and color_board[i-1][5] != '':
+        board[i][j] = selected_letter
+    elif not (i > 0 and j == 0):
+        board[i][j] = selected_letter
+        
+    return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
+
+def registerPost():
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    if not email: #if email is empty
+        flash("Email not provided")
+        return redirect("/register")
+    
+    if not password:
+        flash("Password not provided")
+        return redirect("/register")
+    
+    # check if email already exists
+    exists = search(email)
+    
+    if not exists:
+        flash("Email already exists")
+        return redirect("/register")
+    
+    # get password and the password confirmation
+    
+    password_confirm = request.form.get("password_confirm")
+
+    # meets security standards
+    response = validate(password)
+    if  response == True:
+        if password != password_confirm:
+            flash("Passwords do not match")
+            return redirect("/register")
+        
+        hash = generate_password_hash(password)
+        time = day()
+        db.execute("INSERT INTO user(email,hash,created_at) VALUES(?,?,?)", email,hash, time)
+        rows = db.execute("SELECT id FROM user where email = ?", email)
+        id = rows[0]["id"]
+        session["user_id"] = id
+        
+        # redirect to home page
+        flash("Registered")
+        return redirect("/")
+    
+    else:
+        # flash response from validate password
+        flash(response)
+        return redirect("/register")
+
+def homePost():
+    
+    selected_letter, board, color_board = return_data()
+        
+    i, j = position(board)
+    
+    if selected_letter == "DELETE":
+
+        onDelete(color_board, board, i, j)
+        
+    elif selected_letter == "ENTER":
+
+        onEnter(color_board, board, i, j)
+
+    else:
+        
+        onLetter(color_board, board, i, j, selected_letter)
+
+def homeGet():
+
+    board = boardDefault()
+    keyboard = keyBoard()
+    color_board = boardDefault()
+
+    return render_template("board.html", board=board, letter = letter, keyboard = keyboard, color_board = color_board)
+
+def loginPost():
+    
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    if not email: #if email is empty
+        flash("Email not provided")
+        return redirect("/login")
+    
+    if not password:
+        flash("Password not provided")
+        return redirect("/login")
+
+    # get password and the password confirmation
+
+    rows = db.execute("SELECT * FROM user where email = ?", email)
+
+    if not rows:
+        flash("You are not registered. Sign Up")
+        return redirect("/register")
+    
+    if not check_password_hash(rows[0]['hash'], password):
+        flash("Username or password not correct")
+        return redirect("/login")
+        
+    id = rows[0]["id"]
+    session["user_id"] = id
+        
+    # redirect to home page
+    
+    return redirect("/")
+
 
 
     

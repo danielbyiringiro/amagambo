@@ -12,7 +12,7 @@
         {% endfor %}
     </div>
     <div class="keyboard">
-        <form action="/" method="post">
+        <form action="/" method="post" id="wordleForm">
             {% for row in keyboard %}
                 <div class="{{row}}">
                 {% for key in keyboard[row] %}
