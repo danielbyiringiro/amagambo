@@ -166,6 +166,7 @@ def home():
 
                 if response == True:
                     color_board[i-1] = ["GREEN"] * 6 
+                    print(detail_recorded(session["user_id"]))
                     if detail_recorded(session['user_id']):
                         db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
                     flash(message)
@@ -177,6 +178,7 @@ def home():
                     color_board[i-1] = [x for x in message]
 
                     if i == 7 and j == 0:
+                        print(detail_recorded(session["user_id"]))
                         if detail_recorded(session['user_id']):
                             db.execute("INSERT INTO play(userId, isPlay, date) values(?,'False',?)", session['user_id'], today)
                         flash(f"You ran out of guesses, today's word is {word.upper()}")

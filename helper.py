@@ -285,7 +285,7 @@ def num_day():
 def detail_recorded(id):
 
     today = day()
-    rows = db.execute("select * from play where id = ? and date = ?",id, today)
+    rows = db.execute("select * from play where userId = ? and date = ?",id, today)
     return len(rows) == 0
 
 def word_for_the_day():

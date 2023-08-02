@@ -165,3 +165,23 @@ html, body {
 .navbar-nav .nav-item:last-child {
     margin-left: 5px; /* Add 5px margin to the left of the last navigation item (Logout link) */
 }
+
+.not-supported-message{
+    display: none;
+    padding: 0;
+}
+@media (max-width: 500px) {
+    /* Styles for screens with a maximum width of 500px (e.g., mobile phones) */
+    .not-supported-message {
+        display: block;
+        text-align: center;
+        font-size: 18px;
+        color: red;
+        padding: 20px;
+    }
+
+    /* Hide the game board and keyboard for smaller screens */
+    .game, .keyboard {
+        display: none;
+    }
+}
