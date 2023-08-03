@@ -45,7 +45,6 @@ def generate_image(board, day, score, gap_size=5, tile_gap=2):
 
     draw = ImageDraw.Draw(image)
     title_font = ImageFont.truetype("Arial.ttf", 18)  # Use an available system font and adjust the size if needed
-    #score_font = ImageFont.truetype("DejaVuSans.ttf", 14)  # Use an available system font and adjust the size if needed
 
     title_text = f"Amagambo {day} - {score}/7"
     title_size = get_text_dimensions(title_text, font=title_font)
@@ -63,18 +62,14 @@ def generate_image(board, day, score, gap_size=5, tile_gap=2):
             y2 = y1 + square_size
             image.paste(color, (x1, y1, x2, y2))
 
-    # Save the image to a file (e.g., PNG)
+    # Save the image to a file
    
     image.save("static/colorboard.png", format='PNG')
     
 
-def print_board(board):
-    for i in board:
-        print(i)
-
 def get_text_dimensions(text_string, font):
     # https://stackoverflow.com/a/46220683/9263761
-    ascent, descent = font.getmetrics()
+    _, descent = font.getmetrics()
 
     text_width = font.getmask(text_string).getbbox()[2]
     text_height = font.getmask(text_string).getbbox()[3] + descent
@@ -159,11 +154,16 @@ def checkFunction(guess):
         return message, isWin
     
     colors = []
+    greens = []
+    yellow = []
+    
     for i in range(len(guess)):
         if guess[i] == word[i]:
             colors.append("GREEN")
-        elif guess[i] != word[i] and guess[i] in word:
+            greens.append(word[i])
+        elif guess[i] != word[i] and guess[i] in word and guess[i] not in greens and guess[i] not in yellow:
             colors.append("YELLOW")
+            yellow.append(guess[i])
         else:
             colors.append("RED")
     
@@ -196,14 +196,13 @@ def login_required(f):
 
 def admin_required(f):
     """
-    Decorate routes to require login.
+    Decorate admin route to require user to be an admin.
 
     http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        admin_id = 1
-        if session.get("user_id")  != admin_id:
+        if session.get("admin")  == False:
             return redirect("/")
         return f(*args, **kwargs)
     return decorated_function
@@ -211,7 +210,7 @@ def admin_required(f):
 def search(email):
     """Searches if current email is in database"""
     rows = db.execute("SELECT * FROM user WHERE email = ?", email)
-    #returns a boolean
+
     return len(rows) == 0
     
 def validate(password):
@@ -234,6 +233,7 @@ def validate(password):
 
 
 def days_between():
+    """return days between the starting date and the current date"""
 
     today = datetime.today()
 
@@ -285,7 +285,7 @@ def num_day():
 def detail_recorded(id):
 
     today = day()
-    rows = db.execute("select * from play where userId = ? and date = ?",id, today)
+    rows = db.execute("select * from play where userId = ? and date = ?", id, today)
     return len(rows) == 0
 
 def word_for_the_day():

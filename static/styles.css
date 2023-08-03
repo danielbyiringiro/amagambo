@@ -6,13 +6,11 @@ html, body {
     font-size: 25px;
 }
 
-/* Size for brand */
-nav .navbar-brand
+nav .navbar-brand 
 {
     font-size: xx-large;
 }
 
-/* Colors for brand */
 nav .navbar-brand .blue
 {
     color: #537fbe;
@@ -46,3 +44,52 @@ footer a
     color: initial;
 }
 
+.feedback {
+    text-align: center;
+}
+
+.feedback ul {
+    list-style: none;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    flex-wrap: wrap; 
+}
+
+
+.green {
+    color: #528d4e;
+}
+.yellow {
+    color: #b49f39;
+}
+.red {
+    color: #ea433b;
+}
+.letter {
+    flex: 33%;
+    height: 50px;
+    border: 1px solid grey;
+    margin-right: 20px;
+    display: grid;
+    place-items: center;
+    font-size: 30px;
+    font-weight: bolder;
+    color: white;
+    max-width: 50px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.format {
+    display: flex;
+    margin-right: 20px;
+}
+
+.heading {
+    font-size: 40px;
+    color: #537fbe;
+}
+
+#small {
+    font-size: 30px;
+}

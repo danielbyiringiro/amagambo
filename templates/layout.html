@@ -23,13 +23,15 @@
                 <a class="navbar-brand" href="/"><span class="blue">A</span><span class="red">M</span><span class="yellow">A</span><span class="green">GAMBO</span></a>
                 {% block style%}{% endblock %}
                 <div class="collapse navbar-collapse" id="navbar">
-                    {% if session["user_id"] == 1 %}
+                    {% if session["admin"] %}
                         <ul class="navbar-nav ms-auto mt-2">
                             <li class="nav-item"><a class="nav-link" href="/admin" style="margin-right: 10px; font-size: x-large;">Admin</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/onboard" style="margin-right: 10px; font-size: x-large;">Onboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="/logout" style="margin-right: 10px; font-size: x-large;">Log Out</a></li>
                         </ul>
                     {% elif session["user_id"]%}
                         <ul class="navbar-nav ms-auto mt-2">
+                            <li class="nav-item"><a class="nav-link" href="/onboard" style="margin-right: 10px; font-size: x-large;">Onboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="/logout" style="margin-right: 10px; font-size: x-large;">Log Out</a></li>
                         </ul>
                     {% else %}

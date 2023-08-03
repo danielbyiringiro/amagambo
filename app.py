@@ -55,9 +55,12 @@ def login():
             
         id = rows[0]["id"]
         session["user_id"] = id
+        admin_id = [1]
+        if id in admin_id:
+            session["admin"] = True
+        else:
+            session["admin"] = False
             
-        # redirect to home page
-        
         return redirect("/")
            
     else:
@@ -119,7 +122,7 @@ def register():
             
             # redirect to home page
             flash("Registered")
-            return redirect("/")
+            return redirect("/onboard")
         
         else:
             # flash response from validate password
@@ -213,3 +216,13 @@ def admin():
     
     details = admin_details()
     return render_template("admin.html", details = details)
+
+@app.route("/onboard", methods=["GET","POST"])
+@login_required
+def onboard():
+
+    if request.method == "GET":
+        return render_template("onboard.html")
+    
+    if request.method == "POST":
+        return redirect("/")
