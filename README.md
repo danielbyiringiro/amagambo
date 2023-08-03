@@ -1,2 +1,2 @@
-# amagambo
+# Amagambo
 ## Word Guessing Game in Kinyarwanda
