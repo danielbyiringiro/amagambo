@@ -101,7 +101,7 @@ def letter(attempt_val, letter_position, board, color_board):
     elif color == "RED":
         return f"<div class='letter' id='error'>{letter}</div>"
     else:
-        return f"<div class='letter'>{letter}</div>"
+        return f"<div class='letter' id='{attempt_val}_{letter_position}'>{letter}</div>"
 
 
 def letterDone(attempt_val, letter_position, color_board):
@@ -327,30 +327,7 @@ def available_dates():
     dates = [row["date"] for row in rows]
     return dates
 
-def return_data():
 
-    selected_letter = request.form.get("selected_letter")
-    board = request.form.get("board")
-    color_board = request.form.get("color_board")
-    board = literal_eval(board)
-    color_board = literal_eval(color_board)
-
-    return selected_letter, board, color_board
-
-def onDelete(color_board, board, i, j):
-
-    if i > 0 and j == 0:
-        if color_board[i-1][5] ==  "":
-            board[i-1][5] = ""
-    else:
-        board[i][j-1] = ""
-
-def onLetter(color_board, board, i, j, selected_letter):
-
-    if i > 0 and j == 0 and color_board[i-1][5] != '':
-        board[i][j] = selected_letter
-    elif not (i > 0 and j == 0):
-        board[i][j] = selected_letter
         
     
 

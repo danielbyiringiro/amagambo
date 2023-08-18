@@ -1,8 +1,9 @@
-from flask import Flask, flash, render_template, request, session, redirect
+from flask import Flask, flash, render_template, request, session, redirect, jsonify
 from flask_session import Session
 from helper import *
 from werkzeug.security import check_password_hash, generate_password_hash
 from cs50 import SQL
+from ast import literal_eval
 
 app = Flask(__name__)
 
@@ -169,7 +170,6 @@ def home():
 
                 if response == True:
                     color_board[i-1] = ["GREEN"] * 6 
-                    print(detail_recorded(session["user_id"]))
                     if detail_recorded(session['user_id']):
                         db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
                     flash(message)
@@ -226,3 +226,89 @@ def onboard():
     
     if request.method == "POST":
         return redirect("/")
+
+@app.route('/gameover')
+@login_required
+def gameover():
+
+    return render_template('display.html')
+
+@app.route("/game", methods=["POST"])
+@login_required
+def game():
+
+    data = request.get_json()
+    key = data['key']
+    board = data['board']
+    board = literal_eval(board)
+    color_board = data['color_board']
+    color_board = literal_eval(color_board)
+    i, j = position(board)
+
+
+    if key == 'DELETE':
+        if i > 0 and j == 0:
+            if color_board[i-1][5] ==  "":
+                board[i-1][5] = ""
+                k, m = i-1, 5
+            else:
+
+                return jsonify({"success": False})
+            
+        else:
+            board[i][j-1] = ""
+            k, m = i, j-1
+            
+        return jsonify({"success":True, "board": board, "color": color_board, "position":f"{k}_{m}", "value":key, "category":"special"})
+    
+    elif key == 'ENTER':
+
+        num_days = num_day()
+        today = day()
+        word = word_for_the_day()
+
+        if i > 0 and j == 0:
+
+            guess = "".join(board[i-1])
+            message, response = checkFunction(guess)
+            
+            if response == True:
+                color_board[i-1] = ["GREEN"] * 6 
+                if detail_recorded(session['user_id']):
+                    db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
+                generate_image(color_board, num_days, i)
+
+                return jsonify({"success": True, "isDone": True, "category":"special", "value":key, "message": message})
+            
+            elif len(message) == 6:
+                            
+                color_board[i-1] = [x for x in message]
+
+                if i == 7 and j == 0:
+                    if detail_recorded(session['user_id']):
+                        db.execute("INSERT INTO play(userId, isPlay, date) values(?,'False',?)", session['user_id'], today)
+                    new_message = f"You ran out of guesses, today's word is {word.upper()}"
+                    generate_image(color_board, num_days, "X")
+                    return jsonify({"success": True, "isDone": True, "category":"special", "value":key, "message": new_message})
+                        
+                else:
+                        
+                    return jsonify({"success": True, "isDone": False, "category":"special", "value":key, "color": color_board, "position": i-1, "board": board, "inlist": True})
+            
+            else:
+
+                return jsonify({"success": True, "isDone": False, "category": "special", "value":key, "color": color_board, "board": board, "message": "Word not in list", "inlist": False})
+        
+        else:
+
+            return jsonify({"success": True, "isDone": False, "category": "special", "value":key, "color": color_board, "board": board, "message": "Not enough letters", "notEnough": True})
+            
+    else:
+        if i > 0 and j == 0:
+
+            if color_board[i-1][5] == '' :
+                return jsonify({"success": False})
+
+        board[i][j] = key
+        return jsonify({"success":True, "board": board, "color": color_board, "position":f"{i}_{j}", "value":key, "category":"notspecial"})
+
