@@ -183,4 +183,21 @@ html, body {
     .game, .keyboard {
         display: none;
     }
+
+    footer 
+    {
+        display: none;
+    }
+}
+
+@media (max-width: 1000px) {
+    /* Styles for screens with a maximum width of 1000px (e.g., tablets) */
+    .game 
+    {
+        height: calc(100vh - 170px);
+    }
+    footer 
+    {
+        display: none;
+    }
 }
