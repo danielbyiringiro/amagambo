@@ -1,13 +1,11 @@
 from PIL import Image
 from copy import deepcopy
 from PIL import Image, ImageDraw, ImageFont
-from flask import redirect, session, request, flash, render_template
+from flask import redirect, session
 from functools import wraps
 from cs50 import SQL
 from datetime import datetime, timedelta
 from random import choice
-from ast import literal_eval
-from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQL("sqlite:///amagambo.db")
 
@@ -44,7 +42,8 @@ def generate_image(board, day, score, gap_size=5, tile_gap=2):
     image = Image.new('RGB', (image_width, image_height), color=(0, 0, 0))  # Set background color to black
 
     draw = ImageDraw.Draw(image)
-    title_font = ImageFont.truetype("Arial.ttf", 18)  # Use an available system font and adjust the size if needed
+    font_path = "/home/amagambo/.virtualenvs/flaskamagambo/Arial.ttf"
+    title_font = ImageFont.truetype(font_path, 18)  # Use an available system font and adjust the size if needed
 
     title_text = f"Amagambo {day} - {score}/7"
     title_size = get_text_dimensions(title_text, font=title_font)
@@ -63,9 +62,9 @@ def generate_image(board, day, score, gap_size=5, tile_gap=2):
             image.paste(color, (x1, y1, x2, y2))
 
     # Save the image to a file
-   
+
     image.save("static/colorboard.png", format='PNG')
-    
+
 
 def get_text_dimensions(text_string, font):
     # https://stackoverflow.com/a/46220683/9263761
@@ -90,7 +89,7 @@ def boardDefault():
     return board
 
 def letter(attempt_val, letter_position, board, color_board):
-    
+
     letter = board[attempt_val][letter_position]
     color = color_board[attempt_val][letter_position]
 
@@ -109,7 +108,7 @@ def letterDone(attempt_val, letter_position, color_board):
     board = boardDefault()
     letter = board[attempt_val][letter_position]
     color = color_board[attempt_val][letter_position]
-    
+
     if color == "GREEN":
         return f"<div class='letter' attempt = {attempt_val} pos = {letter_position} id='correct'>{letter}</div>"
     elif color == "YELLOW":
@@ -119,7 +118,7 @@ def letterDone(attempt_val, letter_position, color_board):
     else:
         return f"<div class='letter'>{letter}</div>"
 
-    
+
 
 def keyBoard():
 
@@ -138,7 +137,7 @@ def position(board):
         for j in range(len(board[i])):
             if board[i][j] == "":
                 return i, j
-    
+
     return None, None
 
 def checkFunction(guess):
@@ -147,16 +146,16 @@ def checkFunction(guess):
     all_words = words()
 
     if guess not in all_words:
-        
+
         message = "Word not in list"
         isWin = False
 
         return message, isWin
-    
+
     colors = []
     greens = []
     yellow = []
-    
+
     for i in range(len(guess)):
         if guess[i] == word[i]:
             colors.append("GREEN")
@@ -166,14 +165,14 @@ def checkFunction(guess):
             yellow.append(guess[i])
         else:
             colors.append("RED")
-    
+
     if all([x == "GREEN" for x in colors]):
 
         isWin = True
         message = "Congratulation you guessed the word !!! Feel free to share your gameboard with friends"
 
         return message, isWin
-    
+
     else:
 
         isWin = False
@@ -212,22 +211,22 @@ def search(email):
     rows = db.execute("SELECT * FROM user WHERE email = ?", email)
 
     return len(rows) == 0
-    
+
 def validate(password):
     """Validates if password meets security policy"""
 
     #check length
     if len(password) < 6:
         return "Password has to be at least 8 characters"
-    
+
     #check if password contains a digit
     if not any([x for x in password if x.isdigit()]):
         return "Password has to contain at least a single digit"
-    
+
     #check for letters:
     if not any([x for x in password if x.islower() or x.isupper()]):
         return "Password has to contain at least a single letter"
-    
+
     #passed all checks
     return True
 
@@ -240,7 +239,7 @@ def days_between():
     target_date = datetime(2023, 7, 23)
 
     days_passed = (today - target_date).days
-    
+
     dates_in_between = []
 
     for i in range(1, days_passed):
@@ -252,11 +251,11 @@ def days_between():
 
 
 def admin_details():
-   
+
     dates = available_dates()
     details = []
     for date in dates:
-        
+
         total_users = db.execute("select count(*) as num from user where created_at <= ?", date)[0]['num']
         unguessed = db.execute("select count(*) as num from play where isPlay = 'False' and date = ?", date)[0]['num']
         guessed = db.execute("select count(*) as num from play where isPlay = 'True' and date = ?", date)[0]['num']
@@ -298,7 +297,7 @@ def word_for_the_day():
     if today in dates:
         word = db.execute("select word from wordforday where date = ?", today)[0]['word']
         return str(word)
-    
+
     else:
         allwords = words()
         unused_words = [x for x in allwords if x not in word_s]
@@ -328,13 +327,13 @@ def available_dates():
     return dates
 
 
-        
-    
 
 
 
 
-    
+
+
+
 
 
 
