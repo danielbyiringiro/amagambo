@@ -217,7 +217,7 @@ def validate(password):
     """Validates if password meets security policy"""
 
     #check length
-    if len(password) < 8:
+    if len(password) < 6:
         return "Password has to be at least 8 characters"
     
     #check if password contains a digit

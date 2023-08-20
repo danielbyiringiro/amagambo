@@ -135,7 +135,7 @@ def register():
         return render_template("signup.html")
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 @login_required
 def home():
     if request.method == "GET":
@@ -146,68 +146,6 @@ def home():
 
         return render_template("board.html", board=board, letter = letter, keyboard = keyboard, color_board = color_board)
     
-    if request.method == "POST":
-            
-        selected_letter, board, color_board = return_data()
-        
-        i, j = position(board)
-        
-        if selected_letter == "DELETE":
-
-            onDelete(color_board, board, i, j)
-            return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
-            
-        elif selected_letter == "ENTER":
-
-            num_days = num_day()
-            today = day()
-            word = word_for_the_day()
-
-            if (i > 0 and j == 0):
-                        
-                guess = "".join(board[i-1]) if i is not None else "".join(board[-1])
-                message, response = checkFunction(guess)
-
-                if response == True:
-                    color_board[i-1] = ["GREEN"] * 6 
-                    if detail_recorded(session['user_id']):
-                        db.execute("INSERT INTO play(userId, isPlay, date) values(?,'True',?)", session['user_id'], today)  
-                    flash(message)
-                    generate_image(color_board, num_days, i)
-                    return render_template("display.html")
-                        
-                elif len(message) == 6:
-                            
-                    color_board[i-1] = [x for x in message]
-
-                    if i == 7 and j == 0:
-                        print(detail_recorded(session["user_id"]))
-                        if detail_recorded(session['user_id']):
-                            db.execute("INSERT INTO play(userId, isPlay, date) values(?,'False',?)", session['user_id'], today)
-                        flash(f"You ran out of guesses, today's word is {word.upper()}")
-                        generate_image(color_board, num_days, "X")
-                        return render_template("display.html")
-                            
-                    else:
-                            
-                        return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
-                    
-                else:
-
-                    flash("Word not in list")
-                    return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
-            
-            else:
-
-                flash("Not enough letters")
-                return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
-
-        else:
-            
-            onLetter(color_board, board, i, j, selected_letter)
-            return render_template("board.html", board=board, letter = letter, keyboard = keyBoard(), color_board = color_board)
-        
-
 
 @app.route("/admin")
 @login_required
